@@ -43,6 +43,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
     private static final long DEFAULT_FASTEST_INTERVAL = 5 * 1000; /* 5 sec */;
 
     private boolean mShowLocationDialog = true;
+    private boolean mShowedLocationDialog = false;
     private boolean mForceRequestLocation = false;
     private int mLocationPriority = DEFAULT_ACCURACY;
     private long mUpdateInterval = DEFAULT_INTERVAL;
@@ -323,7 +324,7 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                      * user a dialog. It means either location serivce is not enabled or
                      * default location mode is not enough to perform the request.
                      */
-                    if(!mShowLocationDialog) {
+                    if(!mShowLocationDialog || (mShowedLocationDialog && !mForceRequestLocation)) {
                         invokeError(
                             LocationError.SETTINGS_NOT_SATISFIED.getValue(),
                             "Location settings are not satisfied.",
@@ -344,18 +345,20 @@ public class RNFusedLocationModule extends ReactContextBaseJavaModule {
                             );
                             break;
                         }
-
+                        mShowedLocationDialog = true;
                         resolvable.startResolutionForResult(
                             activity,
                             isSingleUpdate ? REQUEST_SETTINGS_SINGLE_UPDATE : REQUEST_SETTINGS_CONTINUOUS_UPDATE
                         );
                     } catch (SendIntentException e) {
+                        mShowedLocationDialog = false;
                         invokeError(
                             LocationError.INTERNAL_ERROR.getValue(),
                             "Internal error occurred",
                             isSingleUpdate
                         );
                     } catch (ClassCastException e) {
+                        mShowedLocationDialog = false;
                         invokeError(
                             LocationError.INTERNAL_ERROR.getValue(),
                             "Internal error occurred",
